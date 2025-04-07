@@ -15,6 +15,19 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    // Configuración para generar archivos estáticos con rutas relativas
+    base: './',
+    build: {
+      // Asegura que los assets se carguen con rutas relativas
+      assetsDir: 'assets',
+      // Genera un manifest para debugging
+      manifest: true,
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        },
+      },
+    },
     // Asegúrate de que las variables de entorno sean accesibles en el código
     define: {
       "import.meta.env.NEXT_PUBLIC_LANGGRAPH_API_URL": JSON.stringify(env.NEXT_PUBLIC_LANGGRAPH_API_URL || ""),

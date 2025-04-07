@@ -14,8 +14,14 @@ RUN pnpm install --frozen-lockfile
 # Copiar el resto del código fuente
 COPY . .
 
+# Imprimir el contenido de index.html para depuración
+RUN cat index.html
+
 # Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
 RUN pnpm build
+
+# Verificar los archivos generados para depuración
+RUN ls -la dist
 
 # Etapa de producción
 FROM nginx:alpine
