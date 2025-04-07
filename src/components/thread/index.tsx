@@ -12,7 +12,6 @@ import {
   DO_NOT_RENDER_ID_PREFIX,
   ensureToolCallsHaveResponses,
 } from "@/lib/ensure-tool-responses";
-import { LangGraphLogoSVG } from "../icons/langgraph";
 import { TooltipIconButton } from "./tooltip-icon-button";
 import {
   ArrowDown,
@@ -20,21 +19,14 @@ import {
   PanelRightOpen,
   PanelRightClose,
   SquarePen,
+  Mic,
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { GitHubSVG } from "../icons/github";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import { useThreads } from "@/providers/Thread";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -74,35 +66,45 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
-function OpenGitHubRepo() {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href="https://github.com/langchain-ai/agent-chat-ui"
-            target="_blank"
-            className="flex items-center justify-center"
-          >
-            <GitHubSVG width="24" height="24" />
-          </a>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Open GitHub repo</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+// Define interfaces para la API de reconocimiento de voz
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+        confidence: number;
+      };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+// Extender el objeto Window para incluir SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+  }
 }
 
 export function Thread() {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
-    parseAsBoolean.withDefault(false),
-  );
-  const [hideToolCalls, setHideToolCalls] = useQueryState(
-    "hideToolCalls",
     parseAsBoolean.withDefault(false),
   );
   const [input, setInput] = useState("");
@@ -112,8 +114,18 @@ export function Thread() {
   const stream = useStreamContext();
   const messages = stream.messages;
   const isLoading = stream.isLoading;
+  
+  // Acceder a las funciones de gestión de hilos
+  const { getThreads, setThreads, setThreadsLoading } = useThreads();
 
   const lastError = useRef<string | undefined>(undefined);
+
+  // Añadir estado para controlar si el micrófono está activo
+  const [isListening, setIsListening] = useState(false);
+
+  // Añadir referencia para el grabador de audio
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     if (!stream.error) {
@@ -152,10 +164,138 @@ export function Thread() {
       messages[messages.length - 1].type === "ai"
     ) {
       setFirstTokenReceived(true);
+      
+      // También actualizar el historial cuando se recibe un nuevo mensaje
+      if (threadId) {
+        // Dar un pequeño tiempo para que el backend se actualice
+        setTimeout(() => {
+          getThreads()
+            .then(setThreads)
+            .catch(console.error);
+        }, 1000);
+      }
     }
 
     prevMessageLength.current = messages.length;
-  }, [messages]);
+  }, [messages, threadId, getThreads, setThreads]);
+
+  // Modificar la función handleVoiceInput
+  const handleVoiceInput = () => {
+    // Si ya está escuchando, detener la grabación
+    if (isListening && mediaRecorderRef.current) {
+      console.log("🎤 Deteniendo grabación...");
+      mediaRecorderRef.current.stop();
+      return;
+    }
+
+    // Iniciar grabación
+    console.log("🎤 Iniciando grabación de audio...");
+    setIsListening(true);
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        console.log("✅ Permiso de micrófono concedido");
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        console.log("📊 Configuración del MediaRecorder:", {
+          mimeType: mediaRecorder.mimeType,
+          state: mediaRecorder.state
+        });
+        
+        mediaRecorder.ondataavailable = (event) => {
+          console.log(`📦 Chunk de audio recibido: ${event.data.size} bytes`);
+          audioChunksRef.current.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+          console.log("⏹️ Grabación detenida");
+          setIsListening(false);
+          
+          // Crear blob de audio
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          console.log(`🔊 Blob de audio creado: ${audioBlob.size} bytes, tipo: ${audioBlob.type}`);
+          
+          // Crear FormData para enviar el archivo
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.wav');
+          console.log("📋 FormData creado con el blob de audio");
+          
+          // Usar VITE_API_URL como base para la URL de transcripción
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          const transcriptionApiUrl = `${baseApiUrl}/api/v1/transcription`;
+          
+          // Enviar al backend
+          console.log(`🚀 Enviando audio al endpoint de transcripción: ${transcriptionApiUrl}`);
+          fetch(transcriptionApiUrl, {
+            method: 'POST',
+            body: formData,
+          })
+          .then(response => {
+            console.log(`📥 Respuesta recibida: status ${response.status}`);
+            if (!response.ok) {
+              throw new Error(`Error en la transcripción: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log("📝 Datos de transcripción recibidos:", data);
+            // Manejar diferentes formatos de respuesta posibles
+            const transcribedText = data.text || data.transcription || data.transcript || 
+                                   (typeof data === 'string' ? data : null);
+            
+            if (transcribedText) {
+              console.log(`✏️ Añadiendo texto transcrito: "${transcribedText}"`);
+              // Agregar el texto al input, preservando el texto existente
+              setInput(prev => {
+                const trimmedPrev = prev.trim();
+                return trimmedPrev ? `${trimmedPrev} ${transcribedText}` : transcribedText;
+              });
+              
+              // Opcionalmente, enfocar el cuadro de texto después de recibir la transcripción
+              const inputElement = document.querySelector('textarea[placeholder="Escribe tu mensaje..."]');
+              if (inputElement instanceof HTMLTextAreaElement) {
+                inputElement.focus();
+              }
+            } else {
+              console.warn("⚠️ La respuesta no contiene texto transcrito:", data);
+              toast.warning('No se pudo obtener texto de la transcripción');
+            }
+          })
+          .catch(error => {
+            console.error("❌ Error al transcribir:", error);
+            toast.error('Error al transcribir el audio');
+          })
+          .finally(() => {
+            // Detener todas las pistas del stream
+            console.log("🧹 Limpiando recursos de audio...");
+            stream.getTracks().forEach(track => {
+              track.stop();
+              console.log(`  - Pista de audio detenida: ${track.kind}`);
+            });
+          });
+        };
+        
+        // Comenzar grabación
+        mediaRecorder.start();
+        console.log("▶️ Grabación iniciada");
+        
+        // Configurar un tiempo máximo de grabación (30 segundos)
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            console.log("⏱️ Tiempo máximo de grabación alcanzado (30s)");
+            mediaRecorderRef.current.stop();
+          }
+        }, 30000);
+        
+      })
+      .catch(error => {
+        console.error("❌ Error al acceder al micrófono:", error);
+        toast.error('No se pudo acceder al micrófono');
+        setIsListening(false);
+      });
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -201,8 +341,50 @@ export function Thread() {
 
   const chatStarted = !!threadId || !!messages.length;
 
+  // Función para manejar la creación de un nuevo hilo
+  const handleNewThread = async () => {
+    // Si no hay mensajes, no es necesario crear un nuevo hilo
+    if (messages.length === 0 && !threadId) {
+      return;
+    }
+    
+    // Antes de crear un nuevo hilo, asegurarse de actualizar el historial
+    setThreadsLoading(true);
+    try {
+      const updatedThreads = await getThreads();
+      setThreads(updatedThreads);
+      
+      // Limpiar el ID del hilo actual para iniciar uno nuevo
+      setThreadId(null);
+      
+      // Esperar un momento para que la UI se actualice
+      setTimeout(() => {
+        // Refrescar el historial para incluir el nuevo hilo
+        getThreads()
+          .then(setThreads)
+          .catch(console.error)
+          .finally(() => setThreadsLoading(false));
+      }, 500);
+    } catch (error) {
+      console.error("Error al actualizar el historial:", error);
+      setThreadsLoading(false);
+      // Continuar con la creación del hilo a pesar del error
+      setThreadId(null);
+    }
+  };
+
+  // Efecto para actualizar el historial cuando cambia el threadId
+  useEffect(() => {
+    // Si hay un ID de hilo, actualizar el historial para asegurarse de que esté actualizado
+    if (threadId) {
+      getThreads()
+        .then(setThreads)
+        .catch(console.error);
+    }
+  }, [threadId, getThreads, setThreads]);
+
   return (
-    <div className="flex w-full h-screen overflow-hidden">
+    <div className="flex w-full h-full overflow-hidden">
       <div className="relative lg:flex hidden">
         <motion.div
           className="absolute h-full border-r bg-white overflow-hidden z-20"
@@ -261,34 +443,31 @@ export function Thread() {
                 </Button>
               )}
             </div>
-            <div className="absolute top-2 right-4 flex items-center">
-              <OpenGitHubRepo />
-            </div>
           </div>
         )}
         {chatStarted && (
-          <div className="flex items-center justify-between gap-3 p-2 z-10 relative">
-            <div className="flex items-center justify-start gap-2 relative">
+          <div className="flex items-center justify-between gap-2 p-1 z-10 relative">
+            <div className="flex items-center justify-start gap-1 relative">
               <div className="absolute left-0 z-10">
                 {(!chatHistoryOpen || !isLargeScreen) && (
                   <Button
-                    className="hover:bg-gray-100"
+                    className="hover:bg-gray-100 p-1"
                     variant="ghost"
                     onClick={() => setChatHistoryOpen((p) => !p)}
                   >
                     {chatHistoryOpen ? (
-                      <PanelRightOpen className="size-5" />
+                      <PanelRightOpen className="size-4" />
                     ) : (
-                      <PanelRightClose className="size-5" />
+                      <PanelRightClose className="size-4" />
                     )}
                   </Button>
                 )}
               </div>
               <motion.button
-                className="flex gap-2 items-center cursor-pointer"
-                onClick={() => setThreadId(null)}
+                className="flex gap-1 items-center cursor-pointer"
+                onClick={handleNewThread}
                 animate={{
-                  marginLeft: !chatHistoryOpen ? 48 : 0,
+                  marginLeft: !chatHistoryOpen ? 36 : 0,
                 }}
                 transition={{
                   type: "spring",
@@ -296,29 +475,23 @@ export function Thread() {
                   damping: 30,
                 }}
               >
-                <LangGraphLogoSVG width={32} height={32} />
-                <span className="text-xl font-semibold tracking-tight">
-                  Agent Chat
-                </span>
+
               </motion.button>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <OpenGitHubRepo />
-              </div>
+            <div className="flex items-center gap-2">
               <TooltipIconButton
-                size="lg"
-                className="p-4"
-                tooltip="New thread"
+                size="sm"
+                className="p-2"
+                tooltip="Nueva conversación"
                 variant="ghost"
-                onClick={() => setThreadId(null)}
+                onClick={handleNewThread}
               >
-                <SquarePen className="size-5" />
+                <SquarePen className="size-4" />
               </TooltipIconButton>
             </div>
 
-            <div className="absolute inset-x-0 top-full h-5 bg-gradient-to-b from-background to-background/0" />
+            <div className="absolute inset-x-0 top-full h-3 bg-gradient-to-b from-background to-background/0" />
           </div>
         )}
 
@@ -326,10 +499,10 @@ export function Thread() {
           <StickyToBottomContent
             className={cn(
               "absolute inset-0 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
-              !chatStarted && "flex flex-col items-stretch mt-[25vh]",
+              !chatStarted && "flex flex-col items-stretch mt-[10vh]",
               chatStarted && "grid grid-rows-[1fr_auto]",
             )}
-            contentClassName="pt-8 pb-16  max-w-3xl mx-auto flex flex-col gap-4 w-full"
+            contentClassName="pt-4 pb-8 mx-auto flex flex-col gap-3 w-full px-6"
             content={
               <>
                 {messages
@@ -356,22 +529,21 @@ export function Thread() {
               </>
             }
             footer={
-              <div className="sticky flex flex-col items-center gap-8 bottom-0 px-4 bg-white">
+              <div className="sticky flex flex-col items-center bottom-0 px-2 bg-white">
                 {!chatStarted && (
-                  <div className="flex gap-3 items-center">
-                    <LangGraphLogoSVG className="flex-shrink-0 h-8" />
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                      Agent Chat
+                  <div className="flex gap-2 items-center">
+                    <h1 className="text-xl font-semibold tracking-tight">
+                      Bienvenido a Xcala
                     </h1>
                   </div>
                 )}
 
-                <ScrollToBottom className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 animate-in fade-in-0 zoom-in-95" />
+                <ScrollToBottom className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 animate-in fade-in-0 zoom-in-95" />
 
-                <div className="bg-muted rounded-2xl border shadow-xs mx-auto mb-8 w-full max-w-3xl relative z-10">
+                <div className="bg-muted rounded-lg border shadow-xs mx-auto w-full max-w-full relative z-10">
                   <form
                     onSubmit={handleSubmit}
-                    className="grid grid-rows-[1fr_auto] gap-2 max-w-3xl mx-auto"
+                    className="grid grid-rows-[1fr_auto] gap-1 max-w-full mx-auto"
                   >
                     <textarea
                       value={input}
@@ -389,43 +561,51 @@ export function Thread() {
                           form?.requestSubmit();
                         }
                       }}
-                      placeholder="Type your message..."
-                      className="p-3.5 pb-0 border-none bg-transparent field-sizing-content shadow-none ring-0 outline-none focus:outline-none focus:ring-0 resize-none"
+                      placeholder="Escribe tu mensaje..."
+                      className="p-3 pb-0 border-none bg-transparent field-sizing-content shadow-none ring-0 outline-none focus:outline-none focus:ring-0 resize-none max-h-20"
                     />
 
-                    <div className="flex items-center justify-between p-2 pt-4">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="render-tool-calls"
-                            checked={hideToolCalls ?? false}
-                            onCheckedChange={setHideToolCalls}
-                          />
-                          <Label
-                            htmlFor="render-tool-calls"
-                            className="text-sm text-gray-600"
-                          >
-                            Hide Tool Calls
-                          </Label>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-end p-2 pt-2">
                       {stream.isLoading ? (
-                        <Button key="stop" onClick={() => stream.stop()}>
-                          <LoaderCircle className="w-4 h-4 animate-spin" />
-                          Cancel
+                        <Button key="stop" onClick={() => stream.stop()} size="sm">
+                          <LoaderCircle className="w-3 h-3 animate-spin mr-1" />
+                          Cancelar
                         </Button>
                       ) : (
-                        <Button
-                          type="submit"
-                          className="transition-all shadow-md"
-                          disabled={isLoading || !input.trim()}
-                        >
-                          Send
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            className={`transition-all ${isListening ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-transparent'}`}
+                            size="sm"
+                            variant={isListening ? "default" : "ghost"}
+                            aria-label={isListening ? "Detener grabación" : "Usar micrófono"}
+                            title={isListening ? "Detener grabación" : "Usar micrófono"}
+                            onClick={handleVoiceInput}
+                          >
+                            <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="transition-all shadow-sm"
+                            disabled={isLoading || !input.trim()}
+                            size="sm"
+                          >
+                            Enviar
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </form>
+
                 </div>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    {/* <p className="text-xs text-gray-400">
+                      Desarrollado por <a href="https://pharad.ai" className="text-slate-400 hover:text-slate-500">Pharadai</a>
+                    </p> */}
+                    <p className="text-xs text-gray-400">
+                      Desarrollado por Pharadai
+                    </p>
+                  </div>
               </div>
             }
           />

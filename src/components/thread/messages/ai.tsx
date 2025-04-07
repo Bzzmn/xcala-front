@@ -11,7 +11,6 @@ import { MessageContentComplex } from "@langchain/core/messages";
 import { Fragment } from "react/jsx-runtime";
 import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
 import { ThreadView } from "../agent-inbox";
-import { useQueryState, parseAsBoolean } from "nuqs";
 import { GenericInterruptView } from "./generic-interrupt";
 
 function CustomComponent({
@@ -68,24 +67,21 @@ function parseAnthropicStreamedToolCalls(
 export function AssistantMessage({
   message,
   isLoading,
-  handleRegenerate,
 }: {
   message: Message;
   isLoading: boolean;
   handleRegenerate: (parentCheckpoint: Checkpoint | null | undefined) => void;
 }) {
   const contentString = getContentString(message.content);
-  const [hideToolCalls] = useQueryState(
-    "hideToolCalls",
-    parseAsBoolean.withDefault(false),
-  );
+  
+  // Forzar que siempre estén ocultas las tool calls
+  const forceHideToolCalls = true;
 
   const thread = useStreamContext();
   const isLastMessage =
     thread.messages[thread.messages.length - 1].id === message.id;
   const meta = thread.getMessagesMetadata(message);
   const interrupt = thread.interrupt;
-  const parentCheckpoint = meta?.firstSeenState?.parent_checkpoint;
   const anthropicStreamedToolCalls = Array.isArray(message.content)
     ? parseAnthropicStreamedToolCalls(message.content)
     : undefined;
@@ -102,7 +98,7 @@ export function AssistantMessage({
   const hasAnthropicToolCalls = !!anthropicStreamedToolCalls?.length;
   const isToolResult = message.type === "tool";
 
-  if (isToolResult && hideToolCalls) {
+  if (isToolResult && forceHideToolCalls) {
     return null;
   }
 
@@ -118,7 +114,7 @@ export function AssistantMessage({
             </div>
           )}
 
-          {!hideToolCalls && (
+          {!forceHideToolCalls && (
             <>
               {(hasToolCalls && toolCallsHaveContents && (
                 <ToolCalls toolCalls={message.tool_calls} />
@@ -155,7 +151,7 @@ export function AssistantMessage({
               content={contentString}
               isLoading={isLoading}
               isAiMessage={true}
-              handleRegenerate={() => handleRegenerate(parentCheckpoint)}
+              handleRegenerate={undefined}
             />
           </div>
         </div>

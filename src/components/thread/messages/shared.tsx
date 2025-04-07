@@ -1,7 +1,6 @@
 import {
   XIcon,
   SendHorizontal,
-  RefreshCcw,
   Pencil,
   Copy,
   CopyCheck,
@@ -119,7 +118,6 @@ export function CommandBar({
   isEditing,
   setIsEditing,
   handleSubmitEdit,
-  handleRegenerate,
   isLoading,
 }: {
   content: string;
@@ -188,16 +186,6 @@ export function CommandBar({
   return (
     <div className="flex items-center gap-2">
       <ContentCopyable content={content} disabled={isLoading} />
-      {isAiMessage && !!handleRegenerate && (
-        <TooltipIconButton
-          disabled={isLoading}
-          tooltip="Refresh"
-          variant="ghost"
-          onClick={handleRegenerate}
-        >
-          <RefreshCcw />
-        </TooltipIconButton>
-      )}
       {showEdit && (
         <TooltipIconButton
           disabled={isLoading}
