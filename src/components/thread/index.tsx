@@ -223,7 +223,7 @@ export function Thread() {
           console.log("📋 FormData creado con el blob de audio");
           
           // Usar VITE_API_URL como base para la URL de transcripción
-          const baseApiUrl = window.env?.VITE_API_URL || 'http://localhost:8000';
+          const baseApiUrl = window.env?.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
           const transcriptionApiUrl = `${baseApiUrl}/api/v1/transcription`;
           
           // Enviar al backend
