@@ -43,7 +43,7 @@ RUN chmod +x /docker-entrypoint.sh
 EXPOSE 80
 
 # Comando para iniciar el script de entrada
-ENTRYPOINT ["/docker-entrypoint-fixed.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Comando para iniciar nginx
 CMD ["nginx", "-g", "daemon off;"]
