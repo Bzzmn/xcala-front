@@ -4,12 +4,17 @@ set -e
 # Directorio donde se encuentran los archivos estáticos
 APP_DIR=/usr/share/nginx/html
 
-# Valor por defecto para API URL si no está definida
-: ${VITE_API_URL:="https://xcala-api.thefullstack.digital"}
+# Valores por defecto para variables si no están definidas
+DEFAULT_API_URL="https://xcala-api.thefullstack.digital"
+: ${VITE_API_URL:=$DEFAULT_API_URL}
+: ${NEXT_PUBLIC_API_URL:=$DEFAULT_API_URL}
 
 # Mostrar información de depuración
 echo "Contenido del directorio $APP_DIR:"
 ls -la ${APP_DIR}
+
+# Mostrar valores de variables
+echo "API URL: ${VITE_API_URL}"
 
 # Crear el archivo de configuración de runtime con las variables de entorno actuales
 echo "window.env = {" > ${APP_DIR}/env-config.js
@@ -17,6 +22,7 @@ echo "  NEXT_PUBLIC_LANGGRAPH_API_URL: \"${NEXT_PUBLIC_LANGGRAPH_API_URL}\"," >>
 echo "  NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: \"${NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID}\"," >> ${APP_DIR}/env-config.js
 echo "  NEXT_PUBLIC_LANGSMITH_API_KEY: \"${NEXT_PUBLIC_LANGSMITH_API_KEY}\"," >> ${APP_DIR}/env-config.js
 echo "  VITE_API_URL: \"${VITE_API_URL}\"," >> ${APP_DIR}/env-config.js
+echo "  NEXT_PUBLIC_API_URL: \"${NEXT_PUBLIC_API_URL}\"," >> ${APP_DIR}/env-config.js
 echo "};" >> ${APP_DIR}/env-config.js
 
 # Verificar que el archivo se haya creado

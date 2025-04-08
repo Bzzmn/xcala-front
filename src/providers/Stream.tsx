@@ -159,7 +159,7 @@ const getEnvVariable = (key: string): string | undefined => {
     return import.meta.env[key];
   }
   // Valores por defecto para ciertas variables
-  if (key === 'VITE_API_URL') {
+  if (key === 'VITE_API_URL' || key === 'NEXT_PUBLIC_API_URL') {
     return DEFAULT_API_BASE_URL;
   }
   return undefined;

@@ -243,9 +243,8 @@ export function Thread() {
           formData.append('audio', audioBlob, 'recording.wav');
           console.log("📋 FormData creado con el blob de audio");
           
-          // Usar la función getApiUrl para obtener la URL base correcta
-          const baseApiUrl = getApiUrl();
-          const transcriptionApiUrl = `${baseApiUrl}/api/v1/transcription`;
+          // Usar directamente la URL de producción para la transcripción de audio
+          const transcriptionApiUrl = "https://xcala-api.thefullstack.digital/api/v1/transcription";
           
           // Enviar al backend
           console.log(`🚀 Enviando audio al endpoint de transcripción: ${transcriptionApiUrl}`);
