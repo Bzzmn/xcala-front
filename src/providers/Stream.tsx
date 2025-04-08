@@ -86,7 +86,26 @@ const StreamSession = ({
       setThreadId(id);
       // Refetch threads list when thread ID changes.
       // Wait for some seconds before fetching so we're able to get the new thread that was created.
-      sleep().then(() => getThreads().then(setThreads).catch(console.error));
+      // Aumentamos el tiempo de espera a 3 segundos para dar más tiempo al servidor
+      console.log("Thread ID cambiado a:", id);
+      setTimeout(() => {
+        console.log("Actualizando lista de hilos después del cambio de threadId");
+        getThreads()
+          .then(threads => {
+            console.log("Hilos obtenidos:", threads.length);
+            setThreads(threads);
+            // Si después de obtener los hilos no encontramos el actual, intentamos de nuevo
+            if (threads.length > 0 && id && !threads.some(t => t.thread_id === id)) {
+              console.log("No se encontró el hilo actual en la lista, intentando de nuevo en 2s");
+              setTimeout(() => getThreads().then(setThreads), 2000);
+            }
+          })
+          .catch(error => {
+            console.error("Error al obtener hilos:", error);
+            // Intentar de nuevo después de un error
+            setTimeout(() => getThreads().then(setThreads).catch(console.error), 2000);
+          });
+      }, 3000);
     },
   });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Building2, Briefcase, TrendingUp, Wallet, MessageSquare, X, Maximize2, Minimize2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -7,10 +7,30 @@ import ChatWindow from './components/ChatWindow';
 function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar si es un dispositivo móvil
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768); // 768px es el breakpoint para md en Tailwind
+    };
+    
+    // Verificar al cargar
+    checkIfMobile();
+    
+    // Verificar al cambiar el tamaño de la ventana
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Limpiar el evento
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
-    if (!isChatOpen) {
+    // En móviles, siempre abrir a pantalla completa
+    if (!isChatOpen && isMobile) {
+      setIsFullScreen(true);
+    } else if (!isChatOpen) {
       setIsFullScreen(false);
     }
   };
@@ -66,10 +86,10 @@ function App() {
 
       {/* Chat Widget Button */}
       <div 
-        className={`${isFullScreen ? 'fixed inset-0 z-50 flex items-center justify-center' : 'fixed bottom-2 right-8 z-50 flex flex-col items-end'}`}
+        className={`${isFullScreen || (isMobile && isChatOpen) ? 'fixed inset-0 z-50 flex items-center justify-center' : 'fixed bottom-2 right-8 z-50 flex flex-col items-end'}`}
       >
         {isChatOpen && (
-          <div className={`bg-white shadow-2xl ${isFullScreen ? 'w-full h-full max-w-3xl' : 'rounded-lg mb-5 w-[550px] h-[600px] overflow-hidden border border-gray-200'}`}>
+          <div className={`bg-white shadow-2xl ${isFullScreen || isMobile ? 'w-full h-full' : 'rounded-lg mb-5 w-[550px] h-[600px] overflow-hidden border border-gray-200'}`}>
             <div className="bg-blue-700 text-white p-3 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-lg">Asistente</h3>
@@ -93,14 +113,16 @@ function App() {
                 </svg>
               </div>
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={toggleFullScreen}
-                  className="text-white hover:text-gray-200 transition"
-                  aria-label={isFullScreen ? "Minimizar" : "Maximizar"}
-                  title={isFullScreen ? "Minimizar" : "Maximizar"}
-                >
-                  {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                </button>
+                {!isMobile && (
+                  <button 
+                    onClick={toggleFullScreen}
+                    className="text-white hover:text-gray-200 transition"
+                    aria-label={isFullScreen ? "Minimizar" : "Maximizar"}
+                    title={isFullScreen ? "Minimizar" : "Maximizar"}
+                  >
+                    {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                  </button>
+                )}
                 <button 
                   onClick={toggleChat}
                   className="text-white hover:text-gray-200 transition"
@@ -111,7 +133,7 @@ function App() {
                 </button>
               </div>
             </div>
-            <div className={`${isFullScreen ? 'h-[calc(100%-48px)]' : 'h-[calc(600px-48px)]'} overflow-hidden`}>
+            <div className={`${isFullScreen || isMobile ? 'h-[calc(100%-48px)]' : 'h-[calc(600px-48px)]'} overflow-hidden`}>
               <ChatWindow />
             </div>
           </div>

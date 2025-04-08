@@ -168,12 +168,32 @@ export function Thread() {
       
       // También actualizar el historial cuando se recibe un nuevo mensaje
       if (threadId) {
-        // Dar un pequeño tiempo para que el backend se actualice
+        // Dar más tiempo para que el backend actualice los datos
+        console.log("Nuevos mensajes detectados, actualizando historial...");
         setTimeout(() => {
+          console.log("Obteniendo hilos después de nuevos mensajes");
           getThreads()
-            .then(setThreads)
-            .catch(console.error);
-        }, 1000);
+            .then(threads => {
+              console.log(`Hilos obtenidos: ${threads.length}`);
+              setThreads(threads);
+              
+              // Intentar una vez más si no hay hilos o son pocos
+              if (threads.length === 0 || (threadId && !threads.some(t => t.thread_id === threadId))) {
+                console.log("No se encontró el hilo actual en la lista, reintentando...");
+                setTimeout(() => {
+                  getThreads()
+                    .then(updatedThreads => {
+                      console.log(`Segunda actualización, hilos: ${updatedThreads.length}`);
+                      setThreads(updatedThreads);
+                    })
+                    .catch(console.error);
+                }, 2000);
+              }
+            })
+            .catch(error => {
+              console.error("Error al actualizar hilos:", error);
+            });
+        }, 2000);
       }
     }
 
@@ -194,9 +214,9 @@ export function Thread() {
     setIsListening(true);
     
     navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
+      .then(audioStream => {
         console.log("✅ Permiso de micrófono concedido");
-        const mediaRecorder = new MediaRecorder(stream);
+        const mediaRecorder = new MediaRecorder(audioStream);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
         
@@ -247,17 +267,48 @@ export function Thread() {
                                    (typeof data === 'string' ? data : null);
             
             if (transcribedText) {
-              console.log(`✏️ Añadiendo texto transcrito: "${transcribedText}"`);
-              // Agregar el texto al input, preservando el texto existente
-              setInput(prev => {
-                const trimmedPrev = prev.trim();
-                return trimmedPrev ? `${trimmedPrev} ${transcribedText}` : transcribedText;
-              });
+              console.log(`✏️ Texto transcrito recibido: "${transcribedText}"`);
               
-              // Opcionalmente, enfocar el cuadro de texto después de recibir la transcripción
-              const inputElement = document.querySelector('textarea[placeholder="Escribe tu mensaje..."]');
-              if (inputElement instanceof HTMLTextAreaElement) {
-                inputElement.focus();
+              // En lugar de agregar al input, enviar directamente el mensaje
+              const trimmedText = transcribedText.trim();
+              if (trimmedText) {
+                // Establecer el texto en el input (visual) sin activar el foco
+                // Evitamos llamar a focus() para que no se active el teclado en móviles
+                setInput(trimmedText);
+                
+                // Pequeña pausa para que el usuario vea lo que se transcribió
+                setTimeout(() => {
+                  // Crear y enviar mensaje directamente
+                  const newHumanMessage: Message = {
+                    id: uuidv4(),
+                    type: "human",
+                    content: trimmedText,
+                  };
+                  
+                  // Usar el stream del contexto global, que se llama 'stream'
+                  const chatStream = stream; // Esta es la variable stream del useStreamContext() que está en el ámbito global
+                  const toolMessages = ensureToolCallsHaveResponses(chatStream.messages);
+                  chatStream.submit(
+                    { messages: [...toolMessages, newHumanMessage] },
+                    {
+                      streamMode: ["values"],
+                      optimisticValues: (prev: any) => ({
+                        ...prev,
+                        messages: [
+                          ...(prev.messages ?? []),
+                          ...toolMessages,
+                          newHumanMessage,
+                        ],
+                      }),
+                    },
+                  );
+                  
+                  // Limpiar el input después de enviar
+                  setInput("");
+                  setFirstTokenReceived(false);
+                }, 500); // Espera 500ms para que el usuario pueda ver lo que se transcribió
+              } else {
+                toast.warning('El texto transcrito está vacío');
               }
             } else {
               console.warn("⚠️ La respuesta no contiene texto transcrito:", data);
@@ -269,9 +320,9 @@ export function Thread() {
             toast.error('Error al transcribir el audio');
           })
           .finally(() => {
-            // Detener todas las pistas del stream
+            // Detener todas las pistas del audioStream
             console.log("🧹 Limpiando recursos de audio...");
-            stream.getTracks().forEach(track => {
+            audioStream.getTracks().forEach(track => {
               track.stop();
               console.log(`  - Pista de audio detenida: ${track.kind}`);
             });
@@ -289,7 +340,6 @@ export function Thread() {
             mediaRecorderRef.current.stop();
           }
         }, 30000);
-        
       })
       .catch(error => {
         console.error("❌ Error al acceder al micrófono:", error);
@@ -549,6 +599,12 @@ export function Thread() {
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
+                      onFocus={(e) => {
+                        // Si estamos en proceso de transcripción, evitar el foco
+                        if (isListening) {
+                          e.target.blur();
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (
                           e.key === "Enter" &&
