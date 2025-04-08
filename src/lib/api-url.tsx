@@ -19,10 +19,10 @@ export function getApiUrl(): string {
       return url;
     }
     
-    // Si no hay variable de entorno, usar un valor por defecto
-    return 'http://localhost:8010'; // Usar localhost en lugar de xcala-api
+    // Si no hay variable de entorno, usar la URL de producción
+    return 'https://xcala-api.thefullstack.digital'; // Usar la URL de producción como valor por defecto
   } catch {
-    // En caso de error, usar localhost
-    return 'http://localhost:8010';
+    // En caso de error, usar la URL de producción
+    return 'https://xcala-api.thefullstack.digital';
   }
 } 

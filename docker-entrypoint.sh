@@ -4,6 +4,9 @@ set -e
 # Directorio donde se encuentran los archivos estáticos
 APP_DIR=/usr/share/nginx/html
 
+# Valor por defecto para API URL si no está definida
+: ${VITE_API_URL:="https://xcala-api.thefullstack.digital"}
+
 # Mostrar información de depuración
 echo "Contenido del directorio $APP_DIR:"
 ls -la ${APP_DIR}

@@ -146,6 +146,7 @@ declare global {
 // Default values for the form
 const DEFAULT_API_URL = "http://localhost:2024"; // LangGraph API URL 
 const DEFAULT_ASSISTANT_ID = "app";
+const DEFAULT_API_BASE_URL = "https://xcala-api.thefullstack.digital"; // URL base de la API por defecto
 
 // Función para acceder a las variables de entorno en tiempo de ejecución
 const getEnvVariable = (key: string): string | undefined => {
@@ -156,6 +157,10 @@ const getEnvVariable = (key: string): string | undefined => {
   // Luego buscar en import.meta.env (variables de entorno de compilación)
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
     return import.meta.env[key];
+  }
+  // Valores por defecto para ciertas variables
+  if (key === 'VITE_API_URL') {
+    return DEFAULT_API_BASE_URL;
   }
   return undefined;
 };
