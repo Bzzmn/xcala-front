@@ -122,7 +122,7 @@ declare global {
       NEXT_PUBLIC_LANGGRAPH_API_URL?: string;
       NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID?: string;
       NEXT_PUBLIC_LANGSMITH_API_KEY?: string;
-      VITE_API_URL?: string;
+      NEXT_PUBLIC_API_URL?: string;
       [key: string]: string | undefined;
     };
   }
