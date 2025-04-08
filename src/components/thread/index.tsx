@@ -27,6 +27,7 @@ import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useThreads } from "@/providers/Thread";
+import { getApiUrl } from "@/lib/api-url";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -222,9 +223,8 @@ export function Thread() {
           formData.append('audio', audioBlob, 'recording.wav');
           console.log("📋 FormData creado con el blob de audio");
           
-          // Usar VITE_API_URL como base para la URL de transcripción
-          // const baseApiUrl = window.env?.NEXT_PUBLIC_API_URL || 'http://xcala-api:8010';
-          const baseApiUrl = 'http://xcala-api:8010';
+          // Usar la función getApiUrl para obtener la URL base correcta
+          const baseApiUrl = getApiUrl();
           const transcriptionApiUrl = `${baseApiUrl}/api/v1/transcription`;
           
           // Enviar al backend

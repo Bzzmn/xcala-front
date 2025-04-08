@@ -13,7 +13,7 @@ echo "window.env = {" > ${APP_DIR}/env-config.js
 echo "  NEXT_PUBLIC_LANGGRAPH_API_URL: \"${NEXT_PUBLIC_LANGGRAPH_API_URL}\"," >> ${APP_DIR}/env-config.js
 echo "  NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: \"${NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID}\"," >> ${APP_DIR}/env-config.js
 echo "  NEXT_PUBLIC_LANGSMITH_API_KEY: \"${NEXT_PUBLIC_LANGSMITH_API_KEY}\"," >> ${APP_DIR}/env-config.js
-echo "  NEXT_PUBLIC_API_URL: \"${NEXT_PUBLIC_API_URL}\"," >> ${APP_DIR}/env-config.js
+echo "  VITE_API_URL: \"${VITE_API_URL}\"," >> ${APP_DIR}/env-config.js
 echo "};" >> ${APP_DIR}/env-config.js
 
 # Verificar que el archivo se haya creado
