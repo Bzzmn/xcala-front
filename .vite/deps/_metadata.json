@@ -1,0 +1,61 @@
+{
+  "hash": "7ad68357",
+  "configHash": "10071771",
+  "lockfileHash": "c3c6feae",
+  "browserHash": "076ff1de",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/.pnpm/react@19.0.0/node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "4216d36d",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/.pnpm/react-dom@19.0.0_react@19.0.0/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "355e4865",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/.pnpm/react@19.0.0/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "c2fde0d0",
+      "needsInterop": true
+    },
+    "lucide-react": {
+      "src": "../../node_modules/.pnpm/lucide-react@0.476.0_react@19.0.0/node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "05639df9",
+      "needsInterop": false
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/.pnpm/react-router-dom@6.30.0_react-dom@19.0.0_react@19.0.0__react@19.0.0/node_modules/react-router-dom/dist/index.js",
+      "file": "react-router-dom.js",
+      "fileHash": "0e46676c",
+      "needsInterop": false
+    },
+    "nuqs/adapters/react-router/v6": {
+      "src": "../../node_modules/.pnpm/nuqs@2.4.1_react-router-dom@6.30.0_react-dom@19.0.0_react@19.0.0__react@19.0.0__react-router@_xcghoqji2rduo765jfht5djkmy/node_modules/nuqs/dist/adapters/react-router/v6.js",
+      "file": "nuqs_adapters_react-router_v6.js",
+      "fileHash": "d03d1bd5",
+      "needsInterop": false
+    },
+    "sonner": {
+      "src": "../../node_modules/.pnpm/sonner@2.0.1_react-dom@19.0.0_react@19.0.0__react@19.0.0/node_modules/sonner/dist/index.mjs",
+      "file": "sonner.js",
+      "fileHash": "2f2d3e93",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-6GJ4FNJX": {
+      "file": "chunk-6GJ4FNJX.js"
+    },
+    "chunk-GHPR4YOI": {
+      "file": "chunk-GHPR4YOI.js"
+    },
+    "chunk-JMIXDZFF": {
+      "file": "chunk-JMIXDZFF.js"
+    }
+  }
+}
