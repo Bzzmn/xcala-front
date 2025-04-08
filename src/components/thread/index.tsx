@@ -27,7 +27,6 @@ import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useThreads } from "@/providers/Thread";
-import { getApiUrl } from "@/lib/api-url";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
