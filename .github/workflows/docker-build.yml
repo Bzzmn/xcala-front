@@ -41,6 +41,9 @@ jobs:
           aws codeartifact login --tool npm --domain xcala-codebase --domain-owner 680604704550 --repository xcala-agent --region us-east-1
         # This uses the .npmrc file in your repository root
 
+      - name: Prune pnpm store (to clear potentially corrupted cache)
+        run: pnpm store prune
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
