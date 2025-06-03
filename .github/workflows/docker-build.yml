@@ -36,55 +36,43 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1 # Your AWS region
 
-      - name: Login to AWS CodeArtifact
+      - name: Login to AWS CodeArtifact and Get Token
+        id: codeartifact_login # Añadimos un ID a este paso
         run: |
           aws codeartifact login --tool npm --domain xcala-codebase --domain-owner 680604704550 --repository xcala-agent --region us-east-1
-        # This uses the .npmrc file in your repository root
+          # El siguiente comando obtiene el token y lo establece como una salida del paso
+          TOKEN=$(aws codeartifact get-authorization-token --domain xcala-codebase --domain-owner 680604704550 --query authorizationToken --output text)
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
+      # Los siguientes pasos (prune, install, build) son para el runner, no para el Docker build.
+      # Si tu Dockerfile hace todo el build, podrías considerar eliminarlos para ahorrar tiempo,
+      # pero pueden ser útiles para validaciones tempranas. Por ahora los dejamos.
       - name: Prune pnpm store (to clear potentially corrupted cache)
         run: pnpm store prune
 
-      - name: Install dependencies
+      - name: Install dependencies (on runner)
         run: pnpm install --frozen-lockfile
 
-      - name: Build project
-        run: pnpm build # Ensure 'build' is your build script in package.json
-        # This should output to a directory like 'dist' or 'build'
+      - name: Build project (on runner)
+        run: pnpm build
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }} # Or DOCKERHUB_PASSWORD
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3 # Usamos la v3 que es la más reciente
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile # Path to your Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xcala-front:latest # Replace with your image name
-          # Example for tagging with commit SHA:
-          # tags: |
-          #   YOUR_DOCKERHUB_USERNAME/YOUR_DOCKER_IMAGE_NAME:latest
-          #   YOUR_DOCKERHUB_USERNAME/YOUR_DOCKER_IMAGE_NAME:${{ github.sha }}
-          # You might want to add build arguments if your Dockerfile needs them,
-          # for example, to pass the built assets path if not standard.
-          # build-args: |
-          #   APP_VERSION=${{ github.sha }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xcala-front:latest
-          # No pasamos variables de entorno sensibles durante la construcción
+          build-args: |
+            CODEARTIFACT_AUTH_TOKEN=${{ steps.codeartifact_login.outputs.token }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
