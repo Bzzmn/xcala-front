@@ -1,4 +1,4 @@
-import type { ChatWidgetConfig } from "xcala-chat-widget";
+import type { ChatWidgetConfig } from "@xcala/chat-widget";
 
 export const chatConfig: ChatWidgetConfig = {
     langGraphApiUrl: import.meta.env.VITE_LANGGRAPH_API_URL,
