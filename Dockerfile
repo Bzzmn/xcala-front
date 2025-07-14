@@ -9,11 +9,14 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copiar archivos de configuración primero para aprovechar la caché
-COPY package.json pnpm-lock.yaml ./
+COPY pnpm-lock.yaml ./
+COPY front/package.json ./
 
 # Copia el .npmrc de tu proyecto (el que tiene la URL del registry)
 # Asegúrate que este archivo .npmrc exista en la raíz de tu proyecto
-COPY .npmrc .
+# Copy the .npmrc from your project (the one with the registry URL)
+# Ensure this file .npmrc exists in the 'front' directory
+COPY front/.npmrc .
 
 # Configura el token de autenticación para CodeArtifact si se proporcionó
 # La URL aquí debe coincidir exactamente con la que CodeArtifact espera para el token.
@@ -26,10 +29,11 @@ RUN if [ -n "$CODEARTIFACT_AUTH_TOKEN" ]; then \
 RUN pnpm install --frozen-lockfile
 
 # Copiar el resto del código fuente
-COPY . .
+# Copy the rest of the source code from the 'front' directory
+COPY front/ .
 
 # Imprimir el contenido de index.html para depuración
-RUN cat index.html
+
 
 # Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
 RUN pnpm build
