@@ -7,8 +7,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Login from './components/Login'; // Importar el componente Login
 
-import 'xcala-chat-widget/dist/style.css';
-import { ChatWidget, ChatWidgetConfig } from 'xcala-chat-widget';
+import '@xcala/chat-widget/dist/index.css';
+import { ChatWidget, ChatWidgetConfig } from '@xcala/chat-widget';
 import { chatConfig, awsCognitoConfig } from './config'; // Importar también awsCognitoConfig
 
 Amplify.configure(awsCognitoConfig);
