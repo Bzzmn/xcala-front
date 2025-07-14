@@ -12,8 +12,8 @@ export const chatConfig: ChatWidgetConfig = {
 export const awsCognitoConfig = {
   Auth: {
     Cognito: {
-      userPoolId: 'us-east-1_Am52yaKth', // Reemplaza con tu User Pool ID
-      userPoolClientId: '540k5l93t3kqud1up5flukg57e', // Reemplaza con tu App Client ID
+      userPoolId: 'us-east-1_W85muw4w8', // Reemplaza con tu User Pool ID
+      userPoolClientId: '7contbtnb0t6knn5n81hb0mjmu', // Reemplaza con tu App Client ID
       region: 'us-east-1', // Reemplaza con tu región, ej: 'us-east-1'
     }
   }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Amplify } from 'aws-amplify';
-import { signOut, getCurrentUser } from 'aws-amplify/auth';
+import { signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 import { Hub, HubCapsule } from 'aws-amplify/utils'; // Or from '@aws-amplify/core' if using older Amplify
 import { BarChart3, Building2, Briefcase, TrendingUp, Wallet } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Login from './components/Login'; // Importar el componente Login
 
-import 'xcala-chat-widget/dist/index.css';
+import 'xcala-chat-widget/dist/style.css';
 import { ChatWidget, ChatWidgetConfig } from 'xcala-chat-widget';
 import { chatConfig, awsCognitoConfig } from './config'; // Importar también awsCognitoConfig
 
@@ -69,9 +69,13 @@ function App() {
     const updateUserWidgetConfig = async () => {
       if (isAuthenticated) {
         try {
-          const user = await getCurrentUser();
-          // Prefer user.username, fallback to user.signInDetails?.loginId
+          const [user, session] = await Promise.all([
+            getCurrentUser(),
+            fetchAuthSession(),
+          ]);
+
           const userIdFromAmplify = user.username || user.signInDetails?.loginId;
+          const idToken = session.tokens?.idToken?.toString();
           
           if (userIdFromAmplify) {
             console.log('User ID from Amplify for widget config:', userIdFromAmplify);
@@ -85,13 +89,17 @@ function App() {
             return;
           }
           
-          setWidgetConfig({
+          const newWidgetConfig = {
             langGraphApiUrl,
             assistantId,
             langSmithApiKey,
             audioApiUrl,
-            userId: userIdFromAmplify, // Pass it directly; if undefined, it's fine for the type
-          });
+            userId: userIdFromAmplify,
+            idToken: idToken,
+          };
+
+
+          setWidgetConfig(newWidgetConfig);
 
         } catch (error) {
           console.error('Error fetching current user or setting widget config:', error);
@@ -109,7 +117,6 @@ function App() {
   const handleLogout = async () => {
     try {
       await signOut();
-      setIsAuthenticated(false);
     } catch (error) {
       console.error('Error signing out: ', error);
     }
