@@ -2,6 +2,10 @@ FROM node:20-alpine AS build
 
 # Acepta el token de CodeArtifact como un argumento de compilación
 ARG CODEARTIFACT_AUTH_TOKEN
+# Accept VITE variables as build arguments
+ARG VITE_LANGGRAPH_API_URL
+ARG VITE_LANGSMITH_API_KEY
+ARG VITE_AUDIO_API_URL
 
 WORKDIR /app
 
@@ -34,6 +38,12 @@ COPY . .
 
 # Imprimir el contenido de index.html para depuración
 
+
+# Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
+# Set the VITE variables as environment variables for the build command
+ENV VITE_LANGGRAPH_API_URL=${VITE_LANGGRAPH_API_URL}
+ENV VITE_LANGSMITH_API_KEY=${VITE_LANGSMITH_API_KEY}
+ENV VITE_AUDIO_API_URL=${VITE_AUDIO_API_URL}
 
 # Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
 RUN pnpm build
