@@ -18,16 +18,31 @@ declare global {
 
 // Read runtime variables from window.env
 /**
- * Obtiene la configuración base del widget de chat desde el objeto `window.env` en tiempo de ejecución.
- * Esto asegura que los valores se lean solo cuando son necesarios, evitando problemas de timing.
+ * Obtiene la configuración base del widget de chat de forma dinámica para que funcione tanto
+ * en el entorno de desarrollo local como en producción.
+ * - En producción (cuando se compila), lee las variables desde `window.env` (inyectado por Docker).
+ * - En desarrollo, lee las variables directamente desde `import.meta.env` (inyectado por Vite desde .env.local).
  * @returns Un objeto de configuración para el widget, excluyendo datos del usuario.
  */
 export const getChatConfig = (): Omit<ChatWidgetConfig, 'userId' | 'idToken'> => {
+    const isProduction = import.meta.env.PROD;
+
+    // En producción, las variables se inyectan en tiempo de ejecución a través de env-config.js
+    if (isProduction) {
+        return {
+            langGraphApiUrl: window.env?.VITE_LANGGRAPH_API_URL,
+            assistantId: window.env?.VITE_LANGGRAPH_ASSISTANT_ID || "app",
+            langSmithApiKey: window.env?.VITE_LANGSMITH_API_KEY,
+            audioApiUrl: window.env?.VITE_AUDIO_API_URL,
+        };
+    }
+
+    // En desarrollo, Vite las inyecta directamente desde el archivo .env.local
     return {
-        langGraphApiUrl: window.env?.VITE_LANGGRAPH_API_URL,
-        assistantId: window.env?.VITE_LANGGRAPH_ASSISTANT_ID || "app",
-        langSmithApiKey: window.env?.VITE_LANGSMITH_API_KEY,
-        audioApiUrl: window.env?.VITE_AUDIO_API_URL,
+        langGraphApiUrl: import.meta.env.VITE_LANGGRAPH_API_URL,
+        assistantId: import.meta.env.VITE_LANGGRAPH_ASSISTANT_ID || "app",
+        langSmithApiKey: import.meta.env.VITE_LANGSMITH_API_KEY,
+        audioApiUrl: import.meta.env.VITE_AUDIO_API_URL,
     };
 };
 
