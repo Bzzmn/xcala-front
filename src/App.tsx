@@ -9,7 +9,7 @@ import Login from './components/Login'; // Importar el componente Login
 
 import '@xcala/chat-widget/dist/index.css';
 import { ChatWidget, ChatWidgetConfig } from '@xcala/chat-widget';
-import { chatConfig, awsCognitoConfig } from './config'; // Importar también awsCognitoConfig
+import { getChatConfig, awsCognitoConfig } from './config'; // Importar la función getChatConfig
 
 Amplify.configure(awsCognitoConfig);
 
@@ -17,7 +17,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true); // Para evitar parpadeo
   const [widgetConfig, setWidgetConfig] = useState<ChatWidgetConfig | null>(null);
-  const { langGraphApiUrl, assistantId, langSmithApiKey, audioApiUrl } = chatConfig;
+  
 
   // Effect for initial authentication check and listening to auth events
   useEffect(() => {
@@ -83,17 +83,16 @@ function App() {
             console.warn('Could not retrieve a user ID from Amplify. Widget will be configured without a specific user ID.');
           }
 
-          if (!langGraphApiUrl || !assistantId || !langSmithApiKey || !audioApiUrl) {
-            console.error('Missing required chat configuration parameters. Widget will not be configured.');
+                    const baseConfig = getChatConfig(); // ¡Llamar a la función aquí!
+
+          if (!baseConfig.langGraphApiUrl || !baseConfig.assistantId || !baseConfig.langSmithApiKey || !baseConfig.audioApiUrl) {
+            console.error('Missing required chat configuration parameters from window.env. Widget will not be configured.');
             setWidgetConfig(null);
             return;
           }
-          
-          const newWidgetConfig = {
-            langGraphApiUrl,
-            assistantId,
-            langSmithApiKey,
-            audioApiUrl,
+
+          const newWidgetConfig: ChatWidgetConfig = {
+            ...baseConfig,
             userId: userIdFromAmplify,
             idToken: idToken,
           };
@@ -112,7 +111,7 @@ function App() {
     };
 
     updateUserWidgetConfig();
-  }, [isAuthenticated, langGraphApiUrl, assistantId, langSmithApiKey, audioApiUrl]);
+  }, [isAuthenticated]); // El array de dependencias ahora solo necesita isAuthenticated
 
   const handleLogout = async () => {
     try {

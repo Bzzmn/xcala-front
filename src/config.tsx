@@ -17,11 +17,18 @@ declare global {
 }
 
 // Read runtime variables from window.env
-export const chatConfig: ChatWidgetConfig = {
-    langGraphApiUrl: window.env?.VITE_LANGGRAPH_API_URL,
-    assistantId: window.env?.VITE_LANGGRAPH_ASSISTANT_ID || "app",
-    langSmithApiKey: window.env?.VITE_LANGSMITH_API_KEY,
-    audioApiUrl: window.env?.VITE_AUDIO_API_URL,
+/**
+ * Obtiene la configuración base del widget de chat desde el objeto `window.env` en tiempo de ejecución.
+ * Esto asegura que los valores se lean solo cuando son necesarios, evitando problemas de timing.
+ * @returns Un objeto de configuración para el widget, excluyendo datos del usuario.
+ */
+export const getChatConfig = (): Omit<ChatWidgetConfig, 'userId' | 'idToken'> => {
+    return {
+        langGraphApiUrl: window.env?.VITE_LANGGRAPH_API_URL,
+        assistantId: window.env?.VITE_LANGGRAPH_ASSISTANT_ID || "app",
+        langSmithApiKey: window.env?.VITE_LANGSMITH_API_KEY,
+        audioApiUrl: window.env?.VITE_AUDIO_API_URL,
+    };
 };
 
 export const awsCognitoConfig = {
