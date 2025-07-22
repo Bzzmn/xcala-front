@@ -50,7 +50,11 @@ RUN VITE_AWS_USER_POOL_ID=${VITE_AWS_USER_POOL_ID} \
     pnpm build
 
 # Verificar los archivos generados para depuración
-RUN ls -la dist
+RUN ls -la dist/assets
+
+# Tarea de Depuración: Verificar que la variable de User Pool ID fue "horneada" en el código.
+# Si este paso falla, significa que el build no está recibiendo las variables correctamente.
+RUN grep -r "${VITE_AWS_USER_POOL_ID}" dist/assets
 
 # Etapa de producción
 FROM nginx:alpine
