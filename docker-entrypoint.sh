@@ -17,12 +17,13 @@ ls -la ${APP_DIR}
 echo "API URL: ${VITE_API_URL}"
 
 # Crear el archivo de configuración de runtime con las variables de entorno actuales
+# Estas variables deben ser configuradas en el entorno de despliegue (ej. Coolify)
 echo "window.env = {" > ${APP_DIR}/env-config.js
-echo "  NEXT_PUBLIC_LANGGRAPH_API_URL: \"${NEXT_PUBLIC_LANGGRAPH_API_URL}\"," >> ${APP_DIR}/env-config.js
-echo "  NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: \"${NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID}\"," >> ${APP_DIR}/env-config.js
-echo "  NEXT_PUBLIC_LANGSMITH_API_KEY: \"${NEXT_PUBLIC_LANGSMITH_API_KEY}\"," >> ${APP_DIR}/env-config.js
+echo "  VITE_LANGGRAPH_API_URL: \"${VITE_LANGGRAPH_API_URL}\"," >> ${APP_DIR}/env-config.js
+echo "  VITE_LANGGRAPH_ASSISTANT_ID: \"${VITE_LANGGRAPH_ASSISTANT_ID}\"," >> ${APP_DIR}/env-config.js
+echo "  VITE_LANGSMITH_API_KEY: \"${VITE_LANGSMITH_API_KEY}\"," >> ${APP_DIR}/env-config.js
 echo "  VITE_API_URL: \"${VITE_API_URL}\"," >> ${APP_DIR}/env-config.js
-echo "  NEXT_PUBLIC_API_URL: \"${NEXT_PUBLIC_API_URL}\"," >> ${APP_DIR}/env-config.js
+echo "  VITE_AUDIO_API_URL: \"${VITE_AUDIO_API_URL}\"," >> ${APP_DIR}/env-config.js
 echo "};" >> ${APP_DIR}/env-config.js
 
 # Verificar que el archivo se haya creado
