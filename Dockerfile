@@ -42,12 +42,13 @@ COPY . .
 
 # Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
 # Set the VITE variables as environment variables for the build command
-# Construir la aplicación, pasando las variables de entorno de build directamente al comando.
-# Esto asegura que se usen y que la caché de Docker se invalide si cambian.
-RUN VITE_AWS_USER_POOL_ID=${VITE_AWS_USER_POOL_ID} \
-    VITE_AWS_USER_POOL_CLIENT_ID=${VITE_AWS_USER_POOL_CLIENT_ID} \
-    VITE_AWS_REGION=${VITE_AWS_REGION} \
-    pnpm build
+# Crear un archivo .env para que Vite lo lea durante el build. Este método es más robusto.
+RUN echo "VITE_AWS_USER_POOL_ID=${VITE_AWS_USER_POOL_ID}" > .env
+RUN echo "VITE_AWS_USER_POOL_CLIENT_ID=${VITE_AWS_USER_POOL_CLIENT_ID}" >> .env
+RUN echo "VITE_AWS_REGION=${VITE_AWS_REGION}" >> .env
+
+# Construir la aplicación
+RUN pnpm build
 
 # Verificar los archivos generados para depuración
 RUN ls -la dist/assets
