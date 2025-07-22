@@ -42,13 +42,12 @@ COPY . .
 
 # Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
 # Set the VITE variables as environment variables for the build command
-# Estas variables se usan para "hornear" la configuración en el código durante el build
-ENV VITE_AWS_USER_POOL_ID=${VITE_AWS_USER_POOL_ID}
-ENV VITE_AWS_USER_POOL_CLIENT_ID=${VITE_AWS_USER_POOL_CLIENT_ID}
-ENV VITE_AWS_REGION=${VITE_AWS_REGION}
-
-# Construir la aplicación (las variables de entorno de compilación van aquí si son necesarias)
-RUN pnpm build
+# Construir la aplicación, pasando las variables de entorno de build directamente al comando.
+# Esto asegura que se usen y que la caché de Docker se invalide si cambian.
+RUN VITE_AWS_USER_POOL_ID=${VITE_AWS_USER_POOL_ID} \
+    VITE_AWS_USER_POOL_CLIENT_ID=${VITE_AWS_USER_POOL_CLIENT_ID} \
+    VITE_AWS_REGION=${VITE_AWS_REGION} \
+    pnpm build
 
 # Verificar los archivos generados para depuración
 RUN ls -la dist
