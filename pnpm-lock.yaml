@@ -51,8 +51,8 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(vite@6.3.5(@types/node@22.16.3)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)(yaml@2.8.0))
       '@xcala/chat-widget':
-        specifier: ^0.2.7
-        version: 0.2.7(@langchain/core@0.3.62)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-router@6.30.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
+        specifier: ^0.3.2
+        version: 0.3.2(@langchain/core@0.3.62)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-router@6.30.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
       aws-amplify:
         specifier: ^6.15.3
         version: 6.15.3
@@ -1623,8 +1623,8 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0-beta.0
 
-  '@xcala/chat-widget@0.2.7':
-    resolution: {integrity: sha512-+qUoLj6QrKSBAUTTxux54rnXBX2et/yeMgIIYY/DU/xAfhWeOvmd5JJe5i4DcHTXDASe55YWXnJZE8HSYNeA3Q==}
+  '@xcala/chat-widget@0.3.2':
+    resolution: {integrity: sha512-EotS8BMHHmxD+SmdBGc9wW7UGhCha+6VKI+dvpFNKZe6X2bn9BFk4aALY7HB8vBd0GdAn1iSytLJ9TB8VSXaEA==}
     peerDependencies:
       react: 18.3.1
       react-dom: 18.3.1
@@ -5506,7 +5506,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@xcala/chat-widget@0.2.7(@langchain/core@0.3.62)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-router@6.30.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.24.6(zod@3.25.76))':
+  '@xcala/chat-widget@0.3.2(@langchain/core@0.3.62)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-router@6.30.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.24.6(zod@3.25.76))':
     dependencies:
       '@langchain/langgraph': 0.2.74(@langchain/core@0.3.62)(react@18.3.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
       '@langchain/langgraph-sdk': 0.0.92(@langchain/core@0.3.62)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
